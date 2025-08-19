@@ -57,19 +57,56 @@ class evaMPP {
         this is for individual blocks
     */
     generateJsAST(exp){
+        // ---------------------
+        // Numbers and Strings
         if(this._isNumber(exp)){
             return {
                 type : 'NumericLiteral',
                 value : exp,
             };
         }
-        else if (this._isString(exp)){
+        if (this._isString(exp)){
             return{
                 type : 'StringLiteral',
                 value : exp.slice(1,-1)
             }
         }
-        else if (exp[0] === 'begin'){
+        // --------------------
+        // Variables
+
+        // Declaration
+        if(exp[0] === 'var'){
+            return {
+                type : 'VariableDeclaration',
+                declarations : [
+                    {
+                        type : 'VariableDeclarator',
+                        id : this.generateJsAST(this._toVariableName(exp[1])),
+                        init : this.generateJsAST(exp[2]),
+                    }
+                ]
+            }
+        }
+        // Updating
+        if(exp[0] === 'set'){
+            return {
+                type : 'AssignmentExpression',
+                operator : '=',
+                left : this.generateJsAST(this._toVariableName(exp[1])),
+                right : this.generateJsAST(exp[2])
+            }
+        }
+
+        //Access
+        if(this._isVariableName(exp)){
+            return {
+                type: 'Identifier',
+                name: exp,
+            };
+        }
+        // --------------------
+        // Blocks
+        if (exp[0] === 'begin'){
             const [_tag, ...expressions] = exp;
             const body = [];
             expressions.forEach(element => {
@@ -80,9 +117,11 @@ class evaMPP {
                 body,
             }
         }
-        else{
-            throw `Unexpected Expression ${JSON.stringify(exp)}.`
-        }
+        
+        // ----------------------
+        // something wrong
+        throw `Unexpected Expression ${JSON.stringify(exp)}.`
+        
     }
 
     /*
@@ -98,11 +137,23 @@ class evaMPP {
         switch(exp.type){
             case 'StringLiteral':
             case 'NumericLiteral':
+            case 'AssignmentExpression':
+            case 'VariableDeclaration':
                 return {type : 'ExpressionStatement', expression: exp}
             default :
                 return exp;
         }
     }
+    _isVariableName(exp){
+        return typeof(exp) === 'string' && /^[+\-*/<>=a-zA-Z0-9_\.!]+$/.test(exp);
+    }
+    _toVariableName(exp){
+        return this._toJSName(exp); 
+    }
+    _toJSName(exp){
+        return exp.replace(/-([a-z])/g, (match,letter) => letter.toUpperCase());
+    }
+
 }
 
 module.exports = {

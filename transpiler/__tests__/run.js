@@ -12,6 +12,12 @@ let { ast: ast4, target: target4 } = eva.compile(`
     42
     "hello"
     (begin "hello" "world")
+    
+    (var user-name "YOHN")
+    // print("x = " x)
+
+    (set user-name 100)
+    // print("x = " x)
 `);
 
 console.log("----------------");

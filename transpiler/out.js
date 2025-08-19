@@ -4,3 +4,5 @@
   "hello";
   "world";
 }
+let userName = "YOHN";
+userName = 100;
