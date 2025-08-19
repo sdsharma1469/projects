@@ -1,0 +1,43 @@
+
+/*
+// -------------------------
+// lexical grammar
+*/
+
+%lex
+%%
+
+\/\/.*              /*skip comments*/
+\/\*[\s\S]*?\*\/  /*skip multiline comments*/
+\s+                 /*skip whitespace*/
+
+\"[^"]*\"           return 'STRING'
+\d+                 return 'NUMBER'
+[\w\-+*=<>/:,]+     return 'SYMBOL'
+
+/lex
+
+/*
+// ---------------------------
+// Syntactical Grammar (BNF)
+*/
+
+%%
+
+Exp : Atom | List ;
+
+Atom 
+    : NUMBER { $$ = Number($1)}
+    | STRING 
+    | SYMBOL
+    ; 
+
+List 
+    : '(' ListEntries ')' {$$ = $2};
+
+ListEntries
+    : /*empty*/         {$$ = []}
+    | ListEntries Exp   {$1.push($2); $$ = $1;}
+    ;
+
+
