@@ -9,15 +9,17 @@ console.log("PARSING TEST : ");
 
 // Compile
 let { ast: ast4, target: target4 } = eva.compile(`
-    42
-    "hello"
-    (begin "hello" "world")
-    
-    (var user-name "YOHN")
-    // print("x = " x)
 
-    (set user-name 100)
-    // print("x = " x)
+    // (var user-name "John")
+    // (print "user = " user-name)
+
+    // (set user-name "Alex")
+    // (print "user = " user-name)
+    // (print (Number "1"))
+
+    (var x 32)
+    (var y (* 5 (+ x 10)))
+    (print y)
 `);
 
 console.log("----------------");
@@ -30,18 +32,5 @@ console.log("Compiled code : \n");
 // JS Code
 console.log(target4);
 
-console.log("----------------");
+console.log("\n----------------");
 console.log("Result : \n");
-
-// run your shell script
-const scriptPath = path.resolve(__dirname, '../compile-run.sh');
-exec(`bash ${scriptPath}`, (error, stdout, stderr) => {
-  if (error) {
-    console.error(`Error: ${error.message}`);
-    return;
-  }
-  if (stderr) {
-    console.error(`stderr: ${stderr}`);
-  }
-  console.log(stdout);
-});

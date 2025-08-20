@@ -25,7 +25,7 @@ class JsCodeGen{
     }
 
     /*
-        Functions to determine how to convert each AST type into JavaScript code
+        Literals
     */
 
     NumericLiteral(exp){
@@ -44,6 +44,7 @@ class JsCodeGen{
        return `let ${this.gen(id)} = ${this.gen(init)}`;
     }
 
+
     /*
         Variable Assignment
     */
@@ -54,6 +55,17 @@ class JsCodeGen{
         return exp.name;
     }
 
+    /*
+        CallExpression
+    */
+    CallExpression(exp){
+        const callee = this.gen(exp.callee)
+        const args = exp.arguments.map(arg => this.gen(arg)).join(',');
+        return `${callee}(${args})`;
+    }
+    /*
+        Block Statement 
+    */
     BlockStatement(exp){
         this._currentIndent += this._indent;
         let result =  
@@ -66,11 +78,28 @@ class JsCodeGen{
         result += this._ind() + '}';
         return result;
     }
-
+    /*
+        Expression Statement code generation
+    */
     ExpressionStatement(exp){
         return `${this.gen(exp.expression)};`;
     }
 
+    /*
+        Binary Expression Code Generation
+    */
+    BinaryExpression(exp){
+        const op = exp.operator;
+        if(op == "==") {
+            return "===";
+        }
+        if(op == "!="){
+            return "!==";
+        }
+        
+        return `(${this.gen(exp.left)} ${op} ${this.gen(exp.right)})`
+
+    }
     Program(exp){
         return exp.body.map(expression => this.gen(expression)).join('\n');
     }

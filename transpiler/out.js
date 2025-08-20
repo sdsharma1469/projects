@@ -1,8 +1,5 @@
-42;
-"hello";
-{
-  "hello";
-  "world";
-}
-let userName = "YOHN";
-userName = 100;
+const{print} = require('./src/runtime');
+
+let x = 32;
+let y = (5 * (x + 10));
+print(y);

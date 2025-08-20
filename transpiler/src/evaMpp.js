@@ -34,7 +34,12 @@ class evaMPP {
         Saves the code to the specified file
     */
     saveToFile(filename, code){ 
-        fs.writeFileSync(filename, code, 'utf-8');
+        //Prologue - adding runtime environment to our code 
+        const out = 
+        `const{print} = require('./src/runtime');
+
+${code}`
+        fs.writeFileSync(filename, out, 'utf-8');
     }
 
     /*
@@ -57,8 +62,9 @@ class evaMPP {
         this is for individual blocks
     */
     generateJsAST(exp){
-        // ---------------------
-        // Numbers and Strings
+    //-----------------------
+    // Numbers and Strings
+    //-----------------------
         if(this._isNumber(exp)){
             return {
                 type : 'NumericLiteral',
@@ -71,9 +77,10 @@ class evaMPP {
                 value : exp.slice(1,-1)
             }
         }
-        // --------------------
-        // Variables
 
+    //--------------------
+    // Variables
+    //---------------------
         // Declaration
         if(exp[0] === 'var'){
             return {
@@ -101,11 +108,32 @@ class evaMPP {
         if(this._isVariableName(exp)){
             return {
                 type: 'Identifier',
-                name: exp,
+                name: this._toVariableName(exp),
             };
         }
-        // --------------------
-        // Blocks
+
+    //---------------------
+    // Operators
+    //---------------------
+        //Binary Operators
+        if(this._isBinary(exp)){
+            return {
+                type : 'BinaryExpression',
+                left : this.generateJsAST(exp[1]),
+                operator : exp[0],
+                right : this.generateJsAST(exp[2]),
+            }
+        }
+
+        //Logical Operators
+        if(this._isLogicalBinary(exp)){
+            
+        }
+
+
+    //----------------------
+    // Blocks
+    //----------------------
         if (exp[0] === 'begin'){
             const [_tag, ...expressions] = exp;
             const body = [];
@@ -117,9 +145,26 @@ class evaMPP {
                 body,
             }
         }
-        
-        // ----------------------
-        // something wrong
+    //-----------------------
+    // Functions
+    //-----------------------
+
+        //Function Call eg : (square 2)
+        if(Array.isArray(exp)){
+            const fnName = this._toVariableName(exp[0]);
+            const callee = this.generateJsAST(fnName);
+            const args = exp.slice(1).map(arg => this.generateJsAST(arg))
+            return {
+                type : 'CallExpression',
+                callee : callee,
+                arguments : args,
+            }
+        }
+
+
+    //-----------------------
+    // something wrong
+    //-----------------------
         throw `Unexpected Expression ${JSON.stringify(exp)}.`
         
     }
@@ -133,12 +178,30 @@ class evaMPP {
     _isString(exp){
         return typeof(exp) === 'string' && exp[0] === '"' && exp[exp.length-1] === '"';
     }
+    _isBinary(exp){
+        if(exp.length !=3) return false;
+        return (
+            exp[0]==='+'||
+            exp[0]==='-'||
+            exp[0]==='*'||
+            exp[0]==='/'||
+            exp[0]==='='||
+            exp[0]==='!='||
+            exp[0]==='>'||
+            exp[0]==='<'||
+            exp[0]==='>='||
+            exp[0]==='<='
+        );
+    }
     _toStatement(exp){
         switch(exp.type){
             case 'StringLiteral':
             case 'NumericLiteral':
             case 'AssignmentExpression':
             case 'VariableDeclaration':
+            case 'Identifier':
+            case 'CallExpression':
+            case 'BinaryExpression':
                 return {type : 'ExpressionStatement', expression: exp}
             default :
                 return exp;
