@@ -22,7 +22,9 @@ The process works in a few steps:
 
 ---
 
-**2) Eva AST → JavaScript AST**  
+**2) Eva AST → JavaScript AST** 
+(so long... trust me I know)
+https://astexplorer.net/ was a MASSIVE help with figuring out how the AST should look
 <img width="289" height="858" alt="JS AST" src="https://github.com/user-attachments/assets/25732b42-d6f3-4aef-8630-ee705cf9b319" />
 
 ---
