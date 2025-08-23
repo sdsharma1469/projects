@@ -19,7 +19,7 @@ class JsCodeGen{
     */
     gen(exp){
         if(this[exp.type] == null){
-            throw `Unexpected expression type ${ exp.type}`
+            throw `Unexpected expression type ${exp.type}`
         }
         return this[exp.type](exp);
     }
@@ -79,6 +79,36 @@ class JsCodeGen{
         return result;
     }
     /*
+        Branching Statements
+    */
+    IfStatement(exp){
+        const test = this.gen(exp.test);
+        const consequent = this.gen(exp.consequent);
+        const alternate = exp.alternate != null ? `else ${this.gen(exp.alternate)}` : '';
+        
+        return `if (${test}) ${consequent} ${alternate}`
+    }
+
+    // While Loop
+    WhileStatement(exp){
+        const test = this.gen(exp.test);
+        const body = this.gen(exp.body);
+
+        return `while(${test})${body}`
+    }
+    
+    // For Loop
+    ForStatement(exp){
+        const init = this.gen(exp.init);
+        const test = this.gen(exp.test);
+        const update = this.gen(exp.update);
+        const body = this.gen(exp.body);
+
+        return `for(${init} ; ${test} ; ${update}) ${body}`
+    }
+
+
+    /*
         Expression Statement code generation
     */
     ExpressionStatement(exp){
@@ -86,20 +116,45 @@ class JsCodeGen{
     }
 
     /*
+        Update Expressions (++ or --)
+    */
+    UpdateExpression(exp){
+        if(exp.prefix){
+            return `${exp.operator}${this.gen(exp.argument)}`
+        }
+        return `${this.gen(exp.argument)}${exp.operator}`
+    }
+
+    /*
         Binary Expression Code Generation
     */
     BinaryExpression(exp){
-        const op = exp.operator;
+        let op = exp.operator;
         if(op == "==") {
-            return "===";
+            op = "===";
         }
         if(op == "!="){
-            return "!==";
+            op ="!==";
         }
         
         return `(${this.gen(exp.left)} ${op} ${this.gen(exp.right)})`
 
     }
+    /*
+        Logical Expression Code Generation for Binary operators (+ - * / etc.)
+    */
+    LogicalExpression(exp){
+        return `(${this.gen(exp.left)} ${exp.operator} ${this.gen(exp.right)})`
+    }
+
+    /*
+        Logical Expression but only for Unary Operators (- !)
+    */
+    UnaryExpression(exp){
+        return `(${exp.operator}${this.gen(exp.argument)} )`
+    }
+
+
     Program(exp){
         return exp.body.map(expression => this.gen(expression)).join('\n');
     }

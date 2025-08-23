@@ -17,9 +17,30 @@ let { ast: ast4, target: target4 } = eva.compile(`
     // (print "user = " user-name)
     // (print (Number "1"))
 
-    (var x 32)
-    (var y (* 5 (+ x 10)))
-    (print y)
+    // (var x 32)
+    // (var y (* 5 (+ x 10)))
+    // (print (- y))
+
+    // (print(not(and (> x 0) (> x 10))))
+
+    // (var x 42)
+
+    // (if (== x 42)
+    //     (print "hellya")
+    //     (print "hellna"))
+
+    // (var i 5)
+    // (while (> i 0)
+    //     (begin
+    //         (print "i = " i)
+    //         (-- i)
+    //     )
+    // )
+
+    (for (var j 5)(< j 10)(j ++)
+        (print j)
+    )
+    
 `);
 
 console.log("----------------");

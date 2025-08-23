@@ -1,5 +1,9 @@
 const{print} = require('./src/runtime');
 
-let x = 32;
-let y = (5 * (x + 10));
-print(y);
+{
+  let j = 5;
+  while((j < 10)){
+    print(j);
+    j++;
+  }
+}

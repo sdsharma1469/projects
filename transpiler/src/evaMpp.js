@@ -123,12 +123,64 @@ ${code}`
                 operator : exp[0],
                 right : this.generateJsAST(exp[2]),
             }
+        }   
+
+        if(this._isUpdateExpression(exp)){
+            let prefix , argument, operator
+            prefix = this._isVariableName(exp[1]);
+
+            if(prefix){
+                argument = this.generateJsAST(exp[1]);
+                operator = exp[0];
+            }
+            else{
+                argument = this.generateJsAST(exp[0]);
+                operator = exp[1];
+            }
+
+            return{
+                type : 'UpdateExpression',
+                operator,
+                prefix,
+                argument
+            }
+        }
+
+        //Unary Operators
+        if(this._isUnary(exp)){
+            let op = exp[0];
+            if(exp[0]=='not') {
+                op = '!';
+            }
+            return{
+                type: 'UnaryExpression',
+                operator : op,
+                argument : this.generateJsAST(exp[1]),
+            }
         }
 
         //Logical Operators
-        if(this._isLogicalBinary(exp)){
-            
-        }
+            //Logical Binary
+            if(this._isLogicalBinary(exp)){
+                let op;
+                switch(exp[0]){
+                    case 'or':
+                        op = '||';
+                        break;
+                    case 'and':
+                        op = '&&';
+                        break;
+                    default : 
+                        throw `Unknown Logical Operator ${exp[0]}.`;
+                }
+                return {
+                    type : 'LogicalExpression',
+                    left : this.generateJsAST(exp[1]),
+                    operator : op,
+                    right : this.generateJsAST(exp[2]),
+                }
+            }
+
 
 
     //----------------------
@@ -143,6 +195,61 @@ ${code}`
             return {
                 type : 'BlockStatement',
                 body,
+            }
+        }
+    //-----------------------
+    // Branching Statements
+    //-----------------------
+        //If statement
+        if(exp[0] === 'if'){
+            return{
+                type : 'IfStatement',
+                test : this.generateJsAST(exp[1]),
+                consequent : this._toStatement(this.generateJsAST(exp[2])),
+                alternate : this._toStatement(this.generateJsAST(exp[3])),
+            }
+        }
+
+        //While loop
+        if(exp[0] === 'while'){
+            console.log(exp)
+            return{
+                type : 'WhileStatement',
+                test : this.generateJsAST(exp[1]),
+                body : this._toStatement(this.generateJsAST(exp[2]))
+            }
+        }
+
+        //For loop 
+        // (for (var j 5) (< j 10) (j ++) <body>)
+        //While loop
+        // (<init> while <test> <ToStatement(body)> <update>)
+        if(exp[0] === 'for'){
+            let final;
+            let init = exp[1];
+            let test = exp[2];
+            let update = exp[3];
+            let body = exp[4];
+            final =[
+            'begin'
+                ,init,
+                ['while',
+                    test,
+                    ['begin',
+                        body,
+                        update
+                    ]
+                ]
+            ]
+            console.log(final);
+            return this.generateJsAST(final)
+
+            return{
+                type : 'ForStatement',
+                init : this.generateJsAST(exp[1]),
+                test : this.generateJsAST(exp[2]),
+                update : this.generateJsAST(exp[3]),
+                body : this._toStatement(this.generateJsAST(exp[4]))
             }
         }
     //-----------------------
@@ -178,14 +285,23 @@ ${code}`
     _isString(exp){
         return typeof(exp) === 'string' && exp[0] === '"' && exp[exp.length-1] === '"';
     }
+
+    _isVariableName(exp){ 
+        return typeof(exp) === 'string' && /^[+\-*/<>=a-zA-Z0-9_\.!]+$/.test(exp); 
+    }
+
+    /*
+        Binary and Unary Expressions
+    */
     _isBinary(exp){
-        if(exp.length !=3) return false;
+        if(exp.length !==3) return false;
         return (
             exp[0]==='+'||
             exp[0]==='-'||
             exp[0]==='*'||
             exp[0]==='/'||
             exp[0]==='='||
+            exp[0]==='=='||
             exp[0]==='!='||
             exp[0]==='>'||
             exp[0]==='<'||
@@ -193,6 +309,38 @@ ${code}`
             exp[0]==='<='
         );
     }
+
+    _isLogicalBinary(exp){
+        if(exp.length !=3) return false;
+        return (
+            exp[0]==='and'||
+            exp[0]==='or'
+        );
+    }    
+
+    _isUnary(exp){
+        if(exp.length !=2) return false;
+        return (
+            exp[0]==='not'||
+            exp[0]==='-'
+        );
+    }
+
+    _isUpdateExpression(exp){
+        if (!Array.isArray(exp) || exp.length !== 2) return false;
+
+        // prefix: 
+        if ((exp[0] === '++' || exp[0] === '--') && this._isVariableName(exp[1])) return true;
+
+        // postfix:
+        if (this._isVariableName(exp[0]) && (exp[1] === '++' || exp[1] === '--')) return true;
+
+        return false;
+    }
+
+    /*
+        Wraps all Relevant types in a statement
+    */
     _toStatement(exp){
         switch(exp.type){
             case 'StringLiteral':
@@ -202,14 +350,19 @@ ${code}`
             case 'Identifier':
             case 'CallExpression':
             case 'BinaryExpression':
+            case 'LogicalExpression':
+            case 'UnaryExpression':
+            case 'UpdateExpression':
                 return {type : 'ExpressionStatement', expression: exp}
             default :
                 return exp;
         }
     }
-    _isVariableName(exp){
-        return typeof(exp) === 'string' && /^[+\-*/<>=a-zA-Z0-9_\.!]+$/.test(exp);
-    }
+
+    /*
+        Helpers to help set variable names to same format etc
+    */
+
     _toVariableName(exp){
         return this._toJSName(exp); 
     }
