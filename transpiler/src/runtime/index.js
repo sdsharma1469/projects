@@ -6,6 +6,10 @@ function print(...arguments){
     console.log(...arguments);
 }
 
+function spawn(fn, ...args){
+
+}
+
 module.exports ={
-    print
+    print, spawn
 } 

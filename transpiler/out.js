@@ -1,9 +1,11 @@
-const{print} = require('./src/runtime');
+const{print, spawn} = require('./src/runtime');
 
-{
-  let j = 5;
-  while((j < 10)){
-    print(j);
-    j++;
-  }
+
+function handle(x) {
+  return(print(x,1));
 }
+
+handle("x");
+handle("y");
+spawn(handle,"x");
+spawn(handle,"y");

@@ -37,10 +37,24 @@ let { ast: ast4, target: target4 } = eva.compile(`
     //     )
     // )
 
-    (for (var j 5)(< j 10)(j ++)
-        (print j)
+    // (for (var j 5)(< j 10)(j ++)
+    //     (print j)
+    // )
+
+    // (def squareX (x) (* x x))
+    // (print(squareX 2))
+    
+    (def handle(x)
+        (begin
+            (print x 1)
+        )
     )
     
+    (handle "x")
+    (handle "y")
+
+    (spawn handle "x")
+    (spawn handle "y")
 `);
 
 console.log("----------------");

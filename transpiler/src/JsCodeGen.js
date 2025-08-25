@@ -55,6 +55,8 @@ class JsCodeGen{
         return exp.name;
     }
 
+
+    //FUNCTION RELATED THINGS
     /*
         CallExpression
     */
@@ -63,6 +65,21 @@ class JsCodeGen{
         const args = exp.arguments.map(arg => this.gen(arg)).join(',');
         return `${callee}(${args})`;
     }
+
+    /*
+        Return Statement 
+    */
+    ReturnStatement(exp){
+        return `return${this.gen(exp.argument)}`
+    }
+
+    FunctionDeclaration(exp){
+        const id = this.gen(exp.id);
+        const params = exp.params.map(param => this.gen(param)).join(',');
+        const body = this.gen(exp.body)
+        return `\nfunction ${id}(${params}) ${body}\n`
+    }
+
     /*
         Block Statement 
     */

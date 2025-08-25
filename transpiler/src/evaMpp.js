@@ -36,7 +36,7 @@ class evaMPP {
     saveToFile(filename, code){ 
         //Prologue - adding runtime environment to our code 
         const out = 
-        `const{print} = require('./src/runtime');
+        `const{print, spawn} = require('./src/runtime');
 
 ${code}`
         fs.writeFileSync(filename, out, 'utf-8');
@@ -221,9 +221,7 @@ ${code}`
         }
 
         //For loop 
-        // (for (var j 5) (< j 10) (j ++) <body>)
-        //While loop
-        // (<init> while <test> <ToStatement(body)> <update>)
+        //Just converting it into a while loop
         if(exp[0] === 'for'){
             let final;
             let init = exp[1];
@@ -256,6 +254,35 @@ ${code}`
     // Functions
     //-----------------------
 
+        //Function Definition
+        //(def (square(x)(* x x)))
+        if(exp[0]=='def'){
+            
+            const id = this.generateJsAST(this._toVariableName(exp[1]));
+
+            const params = exp[2].map(param => this.generateJsAST(param));
+
+            let bodyExp = exp[3];
+
+            if(!this._hasBlock(bodyExp)){
+                bodyExp = ['begin', bodyExp];
+            }
+
+            const lastStatement = bodyExp[bodyExp.length-1];
+
+            if(!this._isStatement(lastStatement) && lastStatement!= 'return'){
+                bodyExp[bodyExp.length-1] = ['return', lastStatement];
+            }
+
+            const body = this.generateJsAST(bodyExp);
+
+            return{
+                type :'FunctionDeclaration',
+                id,
+                params,
+                body
+            }
+        }
         //Function Call eg : (square 2)
         if(Array.isArray(exp)){
             const fnName = this._toVariableName(exp[0]);
@@ -265,6 +292,15 @@ ${code}`
                 type : 'CallExpression',
                 callee : callee,
                 arguments : args,
+            }
+        }
+
+
+        //Return Statement
+        if(exp[0] == 'return'){
+            return{
+                type : 'ReturnStatement',
+                argument : this.generateJsAST(exp[1])
             }
         }
 
@@ -289,6 +325,24 @@ ${code}`
     _isVariableName(exp){ 
         return typeof(exp) === 'string' && /^[+\-*/<>=a-zA-Z0-9_\.!]+$/.test(exp); 
     }
+
+    _isStatement(exp){
+        return (
+            exp[0] === 'begin'|
+            exp[0] === 'if'|
+            exp[0] === 'while'|
+            exp[0] === 'var'
+        );
+    }
+
+    /*
+        Has X helper functions
+    */
+    _hasBlock(exp){
+        return exp[0]==='begin';
+    }
+
+    
 
     /*
         Binary and Unary Expressions
@@ -366,6 +420,7 @@ ${code}`
     _toVariableName(exp){
         return this._toJSName(exp); 
     }
+
     _toJSName(exp){
         return exp.replace(/-([a-z])/g, (match,letter) => letter.toUpperCase());
     }
