@@ -77,9 +77,17 @@ class JsCodeGen{
         const id = this.gen(exp.id);
         const params = exp.params.map(param => this.gen(param)).join(',');
         const body = this.gen(exp.body)
-        return `\nfunction ${id}(${params}) ${body}\n`
+        const async = exp.async? 'async ' : '';
+        const generator = exp.generator?'*':''
+        return `\n${async}function${generator} ${id}(${params}) ${body}\n`
     }
 
+    /*
+        Yield Expressions
+    */
+    YieldExpression(exp){
+        return 'yield'
+    }  
     /*
         Block Statement 
     */
@@ -170,6 +178,24 @@ class JsCodeGen{
     UnaryExpression(exp){
         return `(${exp.operator}${this.gen(exp.argument)} )`
     }
+
+    /*
+        COMPLEX DATA STRUCTURES
+    */
+        /* 
+            LISTS
+        */
+        ArrayExpression(exp){
+            const elements = exp.elements.map(element => this.gen(element))
+            return `[${elements.join(', ')}]`
+        }
+        MemberExpression(exp){
+            if(exp.computed){
+                return `${this.gen(exp.object)}[${this.gen(exp.property)}]`
+            }
+            return `${this.gen(exp.object)}.${this.gen(exp.property)}`
+        }
+
 
 
     Program(exp){

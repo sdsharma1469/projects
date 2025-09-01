@@ -1,5 +1,6 @@
 const evaParser = require('./parser/evaParser.js');
 const {JsCodeGen} = require('./JsCodeGen.js');
+const {jsTransform} = require('./transform/jsTransform.js')
 const fs = require('node:fs');
 
 const jsCodeGen = new JsCodeGen({indent : 2});
@@ -7,18 +8,25 @@ const jsCodeGen = new JsCodeGen({indent : 2});
 class evaMPP {
     //main Method: 
     compile (program){
+
         /*
-            TODO : parse eva into AST 
+            Map of all functions
+        */
+
+        this._functions = {}
+
+        /*
+            parse eva into AST 
         */
         const EvaAST = evaParser.parse(`(begin ${program})`);
 
         /*
-            TODO : Convert EVA AST into JS AST 
+            Convert EVA AST into JS AST 
         */
         const JsAST = this.generateProgram(EvaAST);
 
         /*
-            TODO : Generate JS code from AST 
+            Generate JS code from AST 
         */
         const target = jsCodeGen.generate(JsAST);
 
@@ -36,7 +44,7 @@ class evaMPP {
     saveToFile(filename, code){ 
         //Prologue - adding runtime environment to our code 
         const out = 
-        `const{print, spawn} = require('./src/runtime');
+        `const{print, spawn, scheduler, sleep} = require('./src/runtime');
 
 ${code}`
         fs.writeFileSync(filename, out, 'utf-8');
@@ -47,10 +55,14 @@ ${code}`
     */
     generateProgram(programBlock){
         const [_tag, ...expressions] = programBlock
-        const body = [];
+       
+        const prevBlock = this._currentBlock;
+        const body = (this._currentBlock = []);
         expressions.forEach(element => {
             body.push(this._toStatement(this.generateJsAST(element)));
         });
+
+        this._currentBlock = prevBlock
         return {
             type : 'Program',
             body : body,
@@ -62,6 +74,7 @@ ${code}`
         this is for individual blocks
     */
     generateJsAST(exp){
+    console.log(exp)
     //-----------------------
     // Numbers and Strings
     //-----------------------
@@ -188,10 +201,16 @@ ${code}`
     //----------------------
         if (exp[0] === 'begin'){
             const [_tag, ...expressions] = exp;
-            const body = [];
+
+            const prevBlock = this._currentBlock;
+
+            const body = (this._currentBlock = []);
             expressions.forEach(element => {
                 body.push(this._toStatement(this.generateJsAST(element)));
             });
+
+            this._currentBlock = prevBlock;
+
             return {
                 type : 'BlockStatement',
                 body,
@@ -250,6 +269,31 @@ ${code}`
                 body : this._toStatement(this.generateJsAST(exp[4]))
             }
         }
+    //-------------------------
+    // Complex Data Structures
+    //-------------------------
+        // LISTS 
+        if(exp[0] == 'list'){
+            const elements = exp.slice(1).map(elt => this.generateJsAST(elt));
+            return {
+                type: 'ArrayExpression',
+                elements,
+            }
+        }
+
+        //list indexing 
+        // eg : idx p 0 
+        // gives the element of p at index 0
+        if(exp[0] == 'idx'){
+            return{
+                type : 'MemberExpression',
+                computed : true,
+                object : this.generateJsAST(exp[1]),
+                property : this.generateJsAST(exp[2]),
+            }
+            
+        }
+
     //-----------------------
     // Functions
     //-----------------------
@@ -276,18 +320,60 @@ ${code}`
 
             const body = this.generateJsAST(bodyExp);
 
-            return{
+            const fn = {
                 type :'FunctionDeclaration',
                 id,
                 params,
                 body
             }
+            this._functions[id.name] = {
+                fn, 
+                definingBlock : this._currentBlock,
+                index : this._currentBlock.length
+            }
+            return fn
         }
         //Function Call eg : (square 2)
         if(Array.isArray(exp)){
+            //if its just a regular function then take the name, callee and args and create a callExpression
             const fnName = this._toVariableName(exp[0]);
             const callee = this.generateJsAST(fnName);
-            const args = exp.slice(1).map(arg => this.generateJsAST(arg))
+            const args = exp.slice(1).map(arg => this.generateJsAST(arg));
+
+            //If spawned - a lot more to do
+            if(callee.name == 'spawn'){
+
+                //first convert the name to a generator function name with an _ in front
+                //eg. square to _square
+                const FunctionName = args[0].name;
+                const GeneratorFunctionName = `_${FunctionName}`
+                //if the function has not been added to the function map already
+                if(this._functions[GeneratorFunctionName] == null){
+                    //take the original function, convert it into a generator, and keep it for later use
+                    
+                    const processFn = jsTransform.functionToAsyncGenerator(
+                        this._functions[FunctionName].fn
+                    );
+
+                    //now add the generator function to the function map
+                    this._functions[GeneratorFunctionName]={
+                        ...this._functions[FunctionName],
+                        fn : processFn,
+                        index : this._functions[FunctionName].index + 1,
+                    };
+
+                    //Going into the block where the original function was defined, and adding the function there too
+                    this._functions[GeneratorFunctionName].definingBlock.splice(
+                        this._functions[GeneratorFunctionName],
+                        0,
+                        processFn
+                    );
+                    
+                }
+                args[0].name = GeneratorFunctionName;
+            }
+            
+
             return {
                 type : 'CallExpression',
                 callee : callee,
@@ -303,6 +389,7 @@ ${code}`
                 argument : this.generateJsAST(exp[1])
             }
         }
+
 
 
     //-----------------------
@@ -407,6 +494,9 @@ ${code}`
             case 'LogicalExpression':
             case 'UnaryExpression':
             case 'UpdateExpression':
+            case 'YieldExpression':
+            case 'ArrayExpression': 
+            case 'MemberExpression':
                 return {type : 'ExpressionStatement', expression: exp}
             default :
                 return exp;

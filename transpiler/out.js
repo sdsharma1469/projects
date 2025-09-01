@@ -1,11 +1,4 @@
-const{print, spawn} = require('./src/runtime');
+const{print, spawn, scheduler, sleep} = require('./src/runtime');
 
-
-function handle(x) {
-  return(print(x,1));
-}
-
-handle("x");
-handle("y");
-spawn(handle,"x");
-spawn(handle,"y");
+let data = [1, 2, 3];
+print(data[0]);

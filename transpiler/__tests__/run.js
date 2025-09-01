@@ -9,52 +9,8 @@ console.log("PARSING TEST : ");
 
 // Compile
 let { ast: ast4, target: target4 } = eva.compile(`
-
-    // (var user-name "John")
-    // (print "user = " user-name)
-
-    // (set user-name "Alex")
-    // (print "user = " user-name)
-    // (print (Number "1"))
-
-    // (var x 32)
-    // (var y (* 5 (+ x 10)))
-    // (print (- y))
-
-    // (print(not(and (> x 0) (> x 10))))
-
-    // (var x 42)
-
-    // (if (== x 42)
-    //     (print "hellya")
-    //     (print "hellna"))
-
-    // (var i 5)
-    // (while (> i 0)
-    //     (begin
-    //         (print "i = " i)
-    //         (-- i)
-    //     )
-    // )
-
-    // (for (var j 5)(< j 10)(j ++)
-    //     (print j)
-    // )
-
-    // (def squareX (x) (* x x))
-    // (print(squareX 2))
-    
-    (def handle(x)
-        (begin
-            (print x 1)
-        )
-    )
-    
-    (handle "x")
-    (handle "y")
-
-    (spawn handle "x")
-    (spawn handle "y")
+    (var data (list 1 2 3))
+    (print (idx data 0))
 `);
 
 console.log("----------------");
