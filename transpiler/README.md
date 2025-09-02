@@ -9,7 +9,12 @@ The process works in a few steps:
 3. **Generate** executable **JavaScript code**  
 
 ---
+### Some Cool Features of my version of Eva 
+- Multithreading : Implemented cooperative multitasking manually using generator functions allowing for concurrency/multithreading
+- runtime environment to allow use of Javascript function and libraries
+- Implemented Complex datastructures - Lists, Records (key,value storage), 
 
+---
 ### 🔄 Example Walkthrough  
 
 **0) Sample Eva Code**  
@@ -22,9 +27,8 @@ The process works in a few steps:
 
 ---
 
-**2) Eva AST → JavaScript AST**  
-Yeah… it’s long 😅 (trust me, I know).  
-A huge shoutout to [AST Explorer](https://astexplorer.net/) — it was **massively helpful** in figuring out how the JavaScript AST should be structured.  
+**2) Eva AST → JavaScript AST**   
+shoutout to [AST Explorer](https://astexplorer.net/) — it was **massively helpful** in figuring out how the JavaScript AST should be structured.  
 
 <img width="289" height="858" alt="JS AST" src="https://github.com/user-attachments/assets/25732b42-d6f3-4aef-8630-ee705cf9b319" />
 
