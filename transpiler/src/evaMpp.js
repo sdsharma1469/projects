@@ -294,6 +294,42 @@ ${code}`
             
         }
 
+        // RECORDS
+        if(exp[0] == 'rec'){
+            const properties = exp.slice(1).map(entry => {
+                let key;
+                let value; 
+
+                if(Array.isArray(entry)){
+                    key = this.generateJsAST(entry[0])
+                    value = this.generateJsAST(entry[1])
+                }
+                else{
+                    key = this.generateJsAST(entry)
+                    value = key;
+                }
+                return {
+                    type : 'ObjectProperty',
+                    key,
+                    value
+                }
+            })
+            return{
+                type : 'ObjectExpression',
+                properties,
+            } 
+        }
+
+        // Access elements from a record
+        if(exp[0] == 'prop'){
+            return {
+                type : 'MemberExpression',
+                object : this.generateJsAST(exp[1]),
+                property : this.generateJsAST(exp[2])
+            }
+        }
+
+
     //-----------------------
     // Functions
     //-----------------------

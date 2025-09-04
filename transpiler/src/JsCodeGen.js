@@ -196,6 +196,20 @@ class JsCodeGen{
             return `${this.gen(exp.object)}.${this.gen(exp.property)}`
         }
 
+        /*
+            RECORDS
+        */
+        ObjectExpression(exp){
+            const properties = exp.properties.map(
+                prop => this.gen(prop)
+            )
+            return `{${properties.join(', ')}}`
+        }
+
+        ObjectProperty(exp){
+            return `${this.gen(exp.key)} : ${this.gen(exp.value)}`
+        }
+
 
 
     Program(exp){

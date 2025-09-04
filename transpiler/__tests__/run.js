@@ -10,7 +10,9 @@ console.log("PARSING TEST : ");
 // Compile
 let { ast: ast4, target: target4 } = eva.compile(`
     (var data (list 1 2 3))
+    (var myRecord (rec (x 1) (y 2)))
     (print (idx data 0))
+    (print (prop myRecord x))
 `);
 
 console.log("----------------");
